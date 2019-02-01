@@ -9,26 +9,30 @@ At the moment the differents Arduino projects are as follows :
   * The rest of the led (in the case of no animation, all of them) become fully lit when stop button is pressed
   
 ## Configuration
-- led_strip_stop.ino
-  - LEDs
-  - Example for this leds
-  `#LED:    0     1  2    3       4       5       6     7  8    9`
-  `Name:[L_start][-][-][L_end][S_start][S_end][R_start][-][-][R_end]`
-    - #define NUM_LEDS 90 -> total number of LEDs
-    - #define L_start 0 -> Start of left 
-    - #define L_end   3 -> End of left
-    - #define S_start 4 -> Start of stop
-    - #define S_end   5 -> End of stop
-    - #define R_start 6 -> Start of right
-    - #define R_end   9 -> End of stop
-  - Animations
-    - #define LR_TimeOut 1000 -> time (ms) before norm color return after signalling, increase if the signal becomes red between each blink
-    - #define INTV_ROLL 32    -> interval (ms) between led roll
-    - #define STEP_ROLL 4     -> step (change in brightness) between led roll
-  - LEDs colors {R,G,B} format, between 0 (off) and 255 (full brightness)
-    - const int color_led_stop[] = {200,0,0};   -> color when stop is applied
-    - const int color_led_turn[] = {255,100,0}; -> color when signalling a turn (left or right)
-    - const int color_led_norm[] = {40,0,0};    -> color when nothing happens
+### Main project
+Example for this LEDs arangment :
+``#LED:    0     1  2    3       4       5       6     7  8    9``
+``Name:[L_start][-][-][L_end][S_start][S_end][R_start][-][-][R_end]``
+
+- LEDs
+  - #define NUM_LEDS 10 -> total number of LEDs
+  - #define L_start 0 -> Start of left 
+  - #define L_end   3 -> End of left
+  - #define S_start 4 -> Start of stop
+  - #define S_end   5 -> End of stop
+  - #define R_start 6 -> Start of right
+  - #define R_end   9 -> End of stop
+- Animations
+  - #define LR_TimeOut 1000 -> time (ms) before norm color return after signalling, increase if the signal becomes red between each blink
+  - #define INTV_ROLL 32    -> interval (ms) between led roll
+  - #define STEP_ROLL 4     -> step (change in brightness) between led roll
+- LEDs colors {R,G,B} format, between 0 (off) and 255 (full brightness)
+  - const int color_led_stop[] = {200,0,0};   -> color when stop is applied
+  - const int color_led_turn[] = {255,100,0}; -> color when signalling a turn (left or right)
+  - const int color_led_norm[] = {40,0,0};    -> color when nothing happens
+ 
+### cc1101 samples
+- TODO
 
 ## Project structure
 - README.md       -> That the file you are reading now
@@ -37,11 +41,11 @@ At the moment the differents Arduino projects are as follows :
 - led_strip_stop  -> Main arduino project
 
 ## Schematics
-### For the main project
+### Main project
 * Be sure to NOT power the LEDs string with the Arduino ! They draw more than what the board can handle !
 ![Schema 1](https://raw.githubusercontent.com/jimmycaille/ArduinoBikeStopLight/master/Schematics/arduino_breadboard_led.png "Schema 1")
 
-### For the cc1101 samples
+### cc1101 samples
 * Be sure to check your module pinout ! Not all are made equals ;)
 ![Schema 2](https://raw.githubusercontent.com/jimmycaille/ArduinoBikeStopLight/master/Schematics/arduino_breadboard_cc1101.png "Schema 2")
 
