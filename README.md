@@ -10,8 +10,8 @@ At the moment the differents Arduino projects are as follows :
   
 ## Configuration
 ### Main project
-Example for this LEDs arangment :
-``#LED:    0     1  2    3       4       5       6     7  8    9``
+Example for this LEDs arangment : 
+``#LED:    0     1  2    3       4       5       6     7  8   9``
 ``Name:[L_start][-][-][L_end][S_start][S_end][R_start][-][-][R_end]``
 
 - LEDs
