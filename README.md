@@ -16,7 +16,7 @@ At the moment the differents Arduino projects are as follows :
 
 ## Schematics
 
-![Schema 1](https://raw.githubusercontent.com/jimmycaille/ArduinoBikeStopLight/master/Schematics/arduino_breadboard_led.png"Schema 1")
+![Schema 1](https://raw.githubusercontent.com/jimmycaille/ArduinoBikeStopLight/master/Schematics/arduino_breadboard_led.png "Schema 1")
 
 ### Wiring
 * Be sure to NOT power the LEDs string with the Arduino ! They draw more than what the board can handle !
