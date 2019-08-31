@@ -1,20 +1,14 @@
-//src
-//https://github.com/veonik/arduino-cc1101
-
 #include <Arduino.h>
-#include "src\cc1101.h"
-#include "src\ccpacket.h"
+#include "cc1101.h"
+#include "ccpacket.h"
 
-/*  PINOUT WIRING
- * ARDUINO CC1101
- *     GND GND
- * 3.3 VCC VCC
- *      10 CSN
- *      11 (MO)SI
- *      12 (MI)SO
- *      13 SCK
- *      02 GD0 -> should be a valid interrupt pin (see below)
- */
+// Attach CC1101 pins to their corresponding SPI pins
+// Uno pins:
+// CSN (SS) => 10
+// MOSI => 11
+// MISO => 12
+// SCK => 13
+// GD0 => A valid interrupt pin for your platform (defined below this)
 
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 #define CC1101Interrupt 4 // Pin 19
@@ -34,17 +28,18 @@ byte syncWord[2] = {199, 10};
 bool packetWaiting;
 
 unsigned long lastSend = 0;
-unsigned int sendDelay = 5000;
-
+unsigned int sendDelay = 100;
+byte incr=0;
 void messageReceived() {
     packetWaiting = true;
 }
 
 void setup() {
     radio.init();
-    radio.setSyncWord(0x01);//syncWord
-    radio.setCarrierFreq(CFREQ_868);//433
+    radio.setSyncWord(syncWord);
+    radio.setCarrierFreq(CFREQ_433); //CFREQ_868-915-433-918
     radio.disableAddressCheck();
+    //radio.setTxPowerAmp(PA_LongDistance);
     radio.setTxPowerAmp(PA_LowPower);
 
     Serial.begin(9600);
@@ -56,7 +51,7 @@ void setup() {
     Serial.println(radio.readReg(CC1101_MARCSTATE, CC1101_STATUS_REGISTER) & 0x1f);
 
     Serial.println(F("CC1101 radio initialized."));
-    attachInterrupt(digitalPinToInterrupt(CC1101Interrupt), messageReceived, FALLING);
+    attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
 }
 
 // Get signal strength indicator in dBm.
@@ -79,37 +74,42 @@ int lqi(char raw) {
 
 void loop() {
     if (packetWaiting) {
-        detachInterrupt(digitalPinToInterrupt(CC1101Interrupt));
+        detachInterrupt(CC1101Interrupt);
         packetWaiting = false;
         CCPACKET packet;
-        //if (radio.receiveData(&packet) > 0) {
-        radio.receiveData(&packet);
-            Serial.println(F("Received packet..."));
+        if (radio.receiveData(&packet) > 0) {
+            Serial.print(F("Received packet :"));
             if (!packet.crc_ok) {
-                Serial.println(F("crc not ok"));
+                Serial.print(F(" crc NOT ok"));
             }
-            Serial.print(F("lqi: "));
-            Serial.println(lqi(packet.lqi));
-            Serial.print(F("rssi: "));
+            Serial.print(F(" lqi: "));
+            Serial.print(lqi(packet.lqi));
+            Serial.print(F(" rssi: "));
             Serial.print(rssi(packet.rssi));
-            Serial.println(F("dBm"));
+            Serial.print(F("dBm"));
 
             if (packet.crc_ok && packet.length > 0) {
-                Serial.print(F("packet: len "));
-                Serial.println(packet.length);
-                Serial.println(F("data: "));
-                Serial.println((const char *) packet.data);
+                Serial.print(F(" packet: len "));
+                Serial.print(packet.length);
+                Serial.print(F(" data: "));
+                Serial.print((const char *) packet.data);
             }
-        //}
+            Serial.println("");
+        }
 
-        attachInterrupt(digitalPinToInterrupt(CC1101Interrupt), messageReceived, FALLING);
+        attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
     }
     unsigned long now = millis();
     if (now > lastSend + sendDelay) {
-        detachInterrupt(digitalPinToInterrupt(CC1101Interrupt));
+        detachInterrupt(CC1101Interrupt);
 
         lastSend = now;
-        const char *message = "hello world";
+        //const char *message = "hello world_";
+        char message[15] = "hello world_";
+        itoa(incr,message+strlen(message),10);incr++;
+        //Serial.println(incr);
+        //Serial.println((const char *)message);
+        
         CCPACKET packet;
         // We also need to include the 0 byte at the end of the string
         packet.length = strlen(message)  + 1;
@@ -118,6 +118,6 @@ void loop() {
         radio.sendData(packet);
         Serial.println(F("Sent packet..."));
 
-        attachInterrupt(digitalPinToInterrupt(CC1101Interrupt), messageReceived, FALLING);
+        attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
     }
 }

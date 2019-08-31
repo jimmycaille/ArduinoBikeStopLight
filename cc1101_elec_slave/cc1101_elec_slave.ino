@@ -4,6 +4,17 @@
 //src:https://www.electrodragon.com/w/CC1101
 //replaced by other library (instead of panstamp not for nano)
 
+/*  PINOUT WIRING
+ * ARDUINO CC1101
+ *     GND GND
+ * 3.3 VCC VCC
+ *      10 CSN
+ *      11 (MO)SI
+ *      12 (MI)SO
+ *      13 SCK
+ *      02 GD0 -> should be a valid interrupt pin (see below)
+ */
+ 
 #define LEDOUTPUT 7
 
 // The connection to the hardware chip CC1101 the RF Chip
@@ -46,8 +57,9 @@ void setup()
  cc1101.init();
  cc1101.reset();
  cc1101.setSyncWord(&syncWord, false);
- cc1101.setCarrierFreq(CFREQ_868);//433
+ cc1101.setCarrierFreq(CFREQ_433);//433
  cc1101.disableAddressCheck();
+ cc1101.setTxPowerAmp(PA_LowPower);//added
  
   Serial.print("CC1101_PARTNUM ");
  b=cc1101.readReg(CC1101_PARTNUM, CC1101_STATUS_REGISTER);
@@ -67,7 +79,7 @@ void setup()
 void loop()
 {
  if(packetAvailable){
-   Serial.print("packet received");
+   Serial.print("packet available\n");
    // Disable wireless reception interrupt
    detachInterrupt(0);
 
@@ -77,6 +89,7 @@ void loop()
    CCPACKET packet;
 
     //TESTTTESTTEST sssssssssssssssssssssssssssssssss
+    
    cc1101.receiveData(&packet);//&buffer
        Serial.print("crc: ");
        Serial.print(packet.crc_ok);
@@ -84,12 +97,14 @@ void loop()
        Serial.print(packet.length);
        Serial.print(" data0: ");
        Serial.println(packet.data[0]);
+       
+       
     //TESTTTESTTEST sssssssssssssssssssssssssssssssss
 
 
   
    if(cc1101.receiveData(&packet) > 0){
-     
+    Serial.print("packet:\n");
      if(!packet.crc_ok) {
        Serial.println("crc not ok");
      }

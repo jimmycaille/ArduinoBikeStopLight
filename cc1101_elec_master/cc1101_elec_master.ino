@@ -4,6 +4,17 @@
 //src: https://www.electrodragon.com/w/CC1101
 //replaced by other library (instead of panstamp not for nano)
 
+/*  PINOUT WIRING
+ * ARDUINO CC1101
+ *     GND GND
+ * 3.3 VCC VCC
+ *      10 CSN
+ *      11 (MO)SI
+ *      12 (MI)SO
+ *      13 SCK
+ *      02 GD0 -> should be a valid interrupt pin (see below)
+ */
+ 
 CC1101 cc1101;
 
 #define LEDOUTPUT 7
@@ -39,8 +50,9 @@ void setup()
  cc1101.init();
  cc1101.reset();
  cc1101.setSyncWord(&syncWord, false);
- cc1101.setCarrierFreq(CFREQ_868);//433
+ cc1101.setCarrierFreq(CFREQ_433);//433
  cc1101.disableAddressCheck();
+ cc1101.setTxPowerAmp(PA_LowPower);//added
  
  Serial.print("CC1101_PARTNUM "); //cc1101=0
  b=cc1101.readReg(CC1101_PARTNUM, CC1101_STATUS_REGISTER);
