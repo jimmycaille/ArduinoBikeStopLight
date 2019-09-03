@@ -25,24 +25,31 @@
 CC1101 radio;
 
 byte syncWord[2] = {199, 10};
-bool packetWaiting;
+byte rcvAddr = 0x22;
+byte sndAddr = 0x11;
+byte channel = 0x00;
+byte freq    = CFREQ_433;//868-915-433-918
+byte mode    = 0;//0 or MODE_LOW_SPEED (38 or 4.8kbps)
+byte power   = PA_LowPower;//PA_LowPower-PA_LongDistance
 
-unsigned long lastSend = 0;
-unsigned int sendDelay = 2000;
 byte incr=0;
-void messageReceived() {
+bool packetWaiting;
+unsigned long lastRcv  = 0;
+unsigned long lastSend = 0;
+unsigned int sendDelay = 10000;
+
+void messageReceived(){
+    lastRcv = millis();
     packetWaiting = true;
 }
 
 void setup() {
-    radio.init();
+    radio.init(freq, mode);
     radio.setSyncWord(syncWord);
-    radio.setDevAddress(0x00);//test
-    radio.setChannel(0x00);//test
-    radio.setCarrierFreq(CFREQ_433); //CFREQ_868-915-433-918
-    //radio.disableAddressCheck();
-    //radio.setTxPowerAmp(PA_LongDistance);
-    radio.setTxPowerAmp(PA_LowPower);
+    radio.setDevAddress(rcvAddr);
+    radio.setChannel(channel);//or radio.disableAddressCheck();
+    //radio.setCarrierFreq(freq);
+    radio.setTxPowerAmp(power);
 
     Serial.begin(9600);
     Serial.print(F("CC1101_PARTNUM "));
@@ -80,48 +87,48 @@ void loop() {
         packetWaiting = false;
         CCPACKET packet;
         if (radio.receiveData(&packet) > 0) {
-            Serial.print(F("Received packet :"));
             if (!packet.crc_ok) {
                 Serial.print(F(" crc NOT ok"));
             }
-            Serial.print(F(" lqi: "));
-            Serial.print(lqi(packet.lqi));
-            Serial.print(F(" rssi: "));
-            Serial.print(rssi(packet.rssi));
-            Serial.print(F("dBm"));
 
             if (packet.crc_ok && packet.length > 0) {
-                Serial.print(F(" packet: len "));
+                Serial.print((const char *) packet.data+1);
+                Serial.print(F(" len:"));
                 Serial.print(packet.length);
-                Serial.print(F(" data: "));
-                Serial.print((const char *) packet.data);
+                Serial.print(F(" lqi:"));
+                Serial.print(lqi(packet.lqi));
+                Serial.print(F(" rssi:"));
+                Serial.print(rssi(packet.rssi));
+                Serial.print(F("dBm RTT:"));
+                Serial.print(lastRcv-lastSend);
+                Serial.print(F("ms"));
             }
-            Serial.println("");
         }
 
         attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
     }
-    unsigned long now = millis();
-    if (now > lastSend + sendDelay) {
+    if (millis() > lastSend + sendDelay) {
         detachInterrupt(CC1101Interrupt);
 
-        lastSend = now;
-        //const char *message = "hello world_";
-        char message[15] = "hello world_";
+        char message[59] = "PING_";
         itoa(incr,message+strlen(message),10);incr++;
         //Serial.println(incr);
         //Serial.println((const char *)message);
         
         CCPACKET packet;
-        // We also need to include the 0 byte at the end of the string
-        packet.length = strlen(message)  + 1;
-        strncpy((char *) packet.data, message, packet.length);
+        // We also need to include the 0 byte at the end of the string and addr
+        packet.length = strlen(message)  + 2;
+        packet.data[0] = sndAddr;
+        strncpy((char *) packet.data+1, message, packet.length);
 
-        packet.data[0] = 0x22;
-
-        radio.sendData(packet);
-        Serial.println(F("Sent packet..."));
-
+        if(radio.sendData(packet)){
+          lastSend = millis();
+          Serial.println("");
+          Serial.print(F("Sent packet... "));
+        }else{
+          Serial.println("");
+          Serial.print(F("Error while sending... "));
+        }
         attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
     }
 }
