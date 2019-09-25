@@ -10,6 +10,17 @@
 // SCK => 13
 // GD0 => A valid interrupt pin for your platform (defined below this)
 
+/*
+ * ARDUINO /  CC-1101  /    ARDUINO
+ *             _____
+ *       VDD -|1   2|- VDD  <- Vcc 3v3
+ * 11 -> SI  -|3   4|- SCK  <- 13
+ * 12 <- SO  -|5   6|- GDO2
+ * 10 -> CSn -|7   8|- GDO0 <-> 2 (ISR+?)
+ *       GND -|9  10|- GND  -> GND
+ *             ¯¯¯¯¯
+ */
+
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 #define CC1101Interrupt 4 // Pin 19
 #define CC1101_GDO0 19

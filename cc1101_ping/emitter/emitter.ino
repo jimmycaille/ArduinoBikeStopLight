@@ -10,6 +10,17 @@
 // SCK => 13
 // GD0 => A valid interrupt pin for your platform (defined below this)
 
+/*
+ * ARDUINO /  CC-1101  /    ARDUINO
+ *             _____
+ *       VDD -|1   2|- VDD  <- Vcc 3v3
+ * 11 -> SI  -|3   4|- SCK  <- 13
+ * 12 <- SO  -|5   6|- GDO2
+ * 10 -> CSn -|7   8|- GDO0 <-> 2 (ISR+?)
+ *       GND -|9  10|- GND  -> GND
+ *             ¯¯¯¯¯
+ */
+
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 #define CC1101Interrupt 4 // Pin 19
 #define CC1101_GDO0 19
@@ -22,11 +33,13 @@
 #define CC1101_GDO0 2
 #endif
 
+#define LEDOUTPUT 7
+
 CC1101 radio;
 
 byte syncWord[2] = {199, 10};
 byte rcvAddr = 0x22;
-byte sndAddr = 0x11;
+byte sndAddr = 0x00;//0x00 : broadcast
 byte channel = 0x00;
 byte freq    = CFREQ_433;//868-915-433-918
 byte mode    = 0;//0 or MODE_LOW_SPEED (38 or 4.8kbps)
@@ -36,8 +49,14 @@ byte incr=0;
 bool packetWaiting;
 unsigned long lastRcv  = 0;
 unsigned long lastSend = 0;
-unsigned int sendDelay = 10000;
+unsigned int sendDelay = 5000;
 
+void blinker(){
+     digitalWrite(LEDOUTPUT, HIGH);
+     delay(100);
+     digitalWrite(LEDOUTPUT, LOW);
+     delay(100);
+}
 void messageReceived(){
     lastRcv = millis();
     packetWaiting = true;
@@ -59,6 +78,13 @@ void setup() {
     Serial.print(F("CC1101_MARCSTATE "));
     Serial.println(radio.readReg(CC1101_MARCSTATE, CC1101_STATUS_REGISTER) & 0x1f);
 
+   // setup the blinker output
+   pinMode(LEDOUTPUT, OUTPUT);
+   digitalWrite(LEDOUTPUT, LOW);
+  
+   // blink once to signal the setup
+   blinker();
+ 
     Serial.println(F("CC1101 radio initialized."));
     attachInterrupt(CC1101Interrupt, messageReceived, FALLING);
 }
@@ -90,9 +116,11 @@ void loop() {
             if (!packet.crc_ok) {
                 Serial.print(F(" crc NOT ok"));
             }
-
-            if (packet.crc_ok && packet.length > 0) {
+            //if (packet.crc_ok && packet.length > 0) {
+            if (packet.length > 0) {
                 Serial.print((const char *) packet.data+1);
+                Serial.print(F(" dst:0x"));
+                Serial.print(packet.data[0], HEX);
                 Serial.print(F(" len:"));
                 Serial.print(packet.length);
                 Serial.print(F(" lqi:"));
@@ -102,6 +130,8 @@ void loop() {
                 Serial.print(F("dBm RTT:"));
                 Serial.print(lastRcv-lastSend);
                 Serial.print(F("ms"));
+                
+                blinker();
             }
         }
 

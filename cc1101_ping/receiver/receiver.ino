@@ -10,6 +10,17 @@
 // SCK => 13
 // GD0 => A valid interrupt pin for your platform (defined below this)
 
+/*
+ * ARDUINO /  CC-1101  /    ARDUINO
+ *             _____
+ *       VDD -|1   2|- VDD  <- Vcc 3v3
+ * 11 -> SI  -|3   4|- SCK  <- 13
+ * 12 <- SO  -|5   6|- GDO2
+ * 10 -> CSn -|7   8|- GDO0 <-> 2 (ISR+?)
+ *       GND -|9  10|- GND  -> GND
+ *             ¯¯¯¯¯
+ */
+
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 #define CC1101Interrupt 4 // Pin 19
 #define CC1101_GDO0 19
@@ -86,10 +97,13 @@ void loop() {
             if (!packet.crc_ok) {
                 Serial.print(F(" crc NOT ok"));
             }
-            if (packet.crc_ok && packet.length > 0) {
+            //if (packet.crc_ok && packet.length > 0) {
+            if (packet.length > 0) {
                 //respond to ping
                 char message[59];
                 strncpy(message,packet.data+1, 25);
+                strcpy(message+strlen(message)," dst:0x");
+                String(packet.data[0],HEX).toCharArray(message+strlen(message),5);
                 strcpy(message+strlen(message)," len:");
                 itoa(packet.length,message+strlen(message),10);
                 strcpy(message+strlen(message)," lqi:");
@@ -113,6 +127,9 @@ void loop() {
                 }else{
                   Serial.print(" ERROR during response...");
                 }
+            }else{
+
+              
             }
             Serial.println("");
         }
